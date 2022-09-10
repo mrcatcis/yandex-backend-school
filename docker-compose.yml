@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  api:
+    build: ./api
+    restart: always
+    image: yet-another-api-image
+    container_name: yet-another-api
+    ports:
+      - "8009:8009"
