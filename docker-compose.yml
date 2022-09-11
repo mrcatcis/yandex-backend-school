@@ -7,3 +7,37 @@ services:
     container_name: yet-another-api
     ports:
       - "8009:8009"
+    networks:
+      database: null
+    volumes:
+      - ./logs:/yet-another-api/logs
+    depends_on:
+      - mariadb
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-}
+      MARIADB_USER: ${MARIADB_USER:-}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-}
+      DATABASE_HOST: ${DATABASE_HOST:-}
+      DATABASE_PORT: ${DATABASE_PORT:-}
+
+  mariadb:
+    image: mariadb
+    restart: always
+    container_name: yet-another-mariadb
+    networks:
+      database:
+        aliases:
+          - ${DATABASE_HOST:-}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-}
+      MARIADB_USER: ${MARIADB_USER:-}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-}
+    volumes:
+      - ./data/db/:/var/lib/mysql
+
+networks:
+  database:
+    ipam:
+      config:
+        - subnet: 216.0.0.0/24
