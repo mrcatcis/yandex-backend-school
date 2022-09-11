@@ -1,8 +1,15 @@
 from fastapi import FastAPI
+from models import (
+    SystemItemType,
+    SystemItem,
+    SystemItemImport,
+    SystemItemImportRequest,
+    Error,
+)
 
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World!"}
+@app.post("/imports/")
+async def root(item: SystemItemImportRequest):
+    return item
