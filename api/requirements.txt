@@ -4,4 +4,4 @@ gunicorn==20.1.0
 setuptools==59.2.0
 greenlet==1.1.2
 sqlalchemy==1.4.26
-mariadb==1.0.8
+psycopg2==2.9.3

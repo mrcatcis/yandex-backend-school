@@ -18,14 +18,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, backref, relationship
 from sqlalchemy.orm.session import Session
 
-MARIADB_USER = getenv("MARIADB_USER")
-MARIADB_PASSWORD = getenv("MARIADB_PASSWORD")
+POSTGRES_USER = getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = getenv("POSTGRES_PASSWORD")
 DATABASE_HOST = getenv("DATABASE_HOST")
 DATABASE_PORT = getenv("DATABASE_PORT")
-MARIADB_DATABASE = getenv("MARIADB_DATABASE")
+POSTGRES_DB = getenv("POSTGRES_DB")
 
 engine = create_engine(
-    f"mariadb+mariadbconnector://{MARIADB_USER}:{MARIADB_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{MARIADB_DATABASE}"
+    f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{POSTGRES_DB}"
 )
 
 Base = declarative_base()
@@ -33,8 +33,13 @@ Base = declarative_base()
 
 class Unit(Base):
     __tablename__ = "unit"
-    id = Column(String(length=256), primary_key=True, nullable=False, unique=True, autoincrement=False)
-    
+    id = Column(
+        String(length=256),
+        primary_key=True,
+        nullable=False,
+        unique=True,
+        autoincrement=False,
+    )
 
 
 Base.metadata.create_all(engine)
@@ -42,10 +47,12 @@ Session = sessionmaker()
 Session.configure(bind=engine)
 session = Session()
 
+
 def addUnit(id: str):
     newUnit = Unit(id=id)
     session.add(newUnit)
     session.commit()
+
 
 def getUnits():
     units = session.query(Unit).all()
