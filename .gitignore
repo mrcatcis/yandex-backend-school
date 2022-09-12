@@ -131,3 +131,5 @@ dmypy.json
 
 # own
 data/
+response.json
+expected.json
