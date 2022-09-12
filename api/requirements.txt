@@ -5,3 +5,4 @@ setuptools==59.2.0
 greenlet==1.1.2
 sqlalchemy==1.4.26
 psycopg2==2.9.3
+python-dateutil==2.8.2

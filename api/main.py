@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from db_requests import getUnits, addUnit
+from db_requests import getUnits, addUnit, unitExist, updateUnit
 from models import (
     SystemItemType,
     SystemItem,
@@ -7,13 +7,14 @@ from models import (
     SystemItemImportRequest,
     Error,
 )
+from utils import time_to_str, str_to_time
 
 app = FastAPI()
 
 
 @app.get("/get_units/")
 def get_unit() -> SystemItemImport:
-    return list(getUnits())
+    return getUnits()
 
 
 @app.post("/add_unit/")
@@ -22,5 +23,10 @@ def add_unit(unit: SystemItemImport):
 
 
 @app.post("/imports/")
-def root(item: SystemItemImportRequest):
-    return item
+def imports(request: SystemItemImportRequest):
+    updateDate = str_to_time(request.updateDate)
+    for item in request.items:
+        if unitExist(item.id):
+            updateUnit(item, updateDate)
+        else:
+            addUnit(item, updateDate)

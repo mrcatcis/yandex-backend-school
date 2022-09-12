@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from typing import List
-from enum import Enum as EnumClass
+import enum
 
-class SystemItemType(EnumClass):
+class SystemItemType(enum.Enum):
     FILE = "FILE"
     FOLDER = "FOLDER"
 
@@ -10,7 +10,7 @@ class SystemItem(BaseModel):
     id: str
     url: str | None = None
     date: str
-    parent_id: str | None = None
+    parentId: str | None = None
     type: SystemItemType
     size: int | None
     children: List[str] | None = None
@@ -18,7 +18,7 @@ class SystemItem(BaseModel):
 class SystemItemImport(BaseModel):
     id: str
     url: str | None = None
-    parent_id: str | None = None
+    parentId: str | None = None
     type: SystemItemType
     size: int | None
     
