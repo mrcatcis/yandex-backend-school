@@ -69,6 +69,11 @@ def addUnit(unit: SystemItemImport, date: datetime):
         type=unit.type,
         size=unit.size,
     )
+    parentId = unit.parentId
+    while parentId is not None:
+        session.query(Unit).filter(Unit.id == parentId).update({Unit.date: date})
+        parent = session.query(Unit).get(parentId)
+        parentId = parent and parent.parentId
     session.add(newUnit)
     session.commit()
 
@@ -91,6 +96,11 @@ def updateUnit(unit: SystemItemImport, date: datetime):
             Unit.size: unit.size,
         }
     )
+    parentId = unit.parentId
+    while parentId is not None:
+        session.query(Unit).filter(Unit.id == parentId).update({Unit.date: date})
+        parent = session.query(Unit).get(parentId)
+        parentId = parent and parent.parentId
     session.commit()
 
 
