@@ -60,6 +60,13 @@ Session.configure(bind=engine)
 session = Session()
 
 
+def updateParentDate(parentId: str, date: datetime):
+    while parentId is not None:
+        session.query(Unit).filter(Unit.id == parentId).update({Unit.date: date})
+        parent = session.query(Unit).get(parentId)
+        parentId = parent and parent.parentId
+    session.commit()
+
 def addUnit(unit: SystemItemImport, date: datetime):
     newUnit = Unit(
         id=unit.id,
@@ -69,11 +76,7 @@ def addUnit(unit: SystemItemImport, date: datetime):
         type=unit.type,
         size=unit.size,
     )
-    parentId = unit.parentId
-    while parentId is not None:
-        session.query(Unit).filter(Unit.id == parentId).update({Unit.date: date})
-        parent = session.query(Unit).get(parentId)
-        parentId = parent and parent.parentId
+    updateParentDate(unit.parentId, date)
     session.add(newUnit)
     session.commit()
 
@@ -96,11 +99,7 @@ def updateUnit(unit: SystemItemImport, date: datetime):
             Unit.size: unit.size,
         }
     )
-    parentId = unit.parentId
-    while parentId is not None:
-        session.query(Unit).filter(Unit.id == parentId).update({Unit.date: date})
-        parent = session.query(Unit).get(parentId)
-        parentId = parent and parent.parentId
+    updateParentDate(unit.parentId, date)
     session.commit()
 
 
@@ -109,13 +108,14 @@ def get_children(parent_id: str) -> List[Unit]:
     return session.query(Unit).filter(Unit.parentId == parent_id).all()
 
 
-def deleteUnit(id: str):
+def deleteUnit(id: str, date: datetime):
     unit = session.query(Unit).get(id)
     if unit.type == SystemItemType.FOLDER:
         for child in get_children(unit.id):
             deleteUnit(child.id)
     session.query(Unit).filter(Unit.id == id).delete()
     session.commit()
+    updateParentDate(unit.parentId, date)
 
 
 def getUnitInfo(id: str) -> SystemItem:

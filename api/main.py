@@ -43,11 +43,11 @@ def get_item() -> SystemItemImport:
 
 
 @app.delete("/delete/{id}")
-def delete_item(id: str, time: datetime, response: Response):
+def delete_item(id: str, date: datetime, response: Response):
     if not unitExist(id):
         response.status_code = status.HTTP_404_NOT_FOUND
         return Error(code=404, message="Item not found")
-    deleteUnit(id)
+    deleteUnit(id, date)
 
 
 @app.post("/imports/")
