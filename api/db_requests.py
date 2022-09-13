@@ -156,3 +156,9 @@ def getNode(id: str) -> SystemItem:
 
 def getUnits():
     return session.query(Unit).all()
+
+def getUpdates(date: datetime): # TODO implement
+    pass
+
+def getNodeHistory(id: str, date_start: datetime, date_end: datetime): # TODO implement
+    pass
