@@ -1,4 +1,8 @@
 from fastapi import FastAPI, Response, status
+from fastapi.exceptions import RequestValidationError
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from db_requests import (
     getUnits,
     addUnit,
@@ -22,6 +26,17 @@ from datetime import datetime
 app = FastAPI()
 
 
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Overrides FastAPI default validation errors"""
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder(
+            Error(code=status.HTTP_400_BAD_REQUEST, message="Validation Failed")
+        ),
+    )
+
+
 @app.get("/get_items/")
 def get_item() -> SystemItemImport:
     return getUnits()
@@ -29,10 +44,6 @@ def get_item() -> SystemItemImport:
 
 @app.delete("/delete/{id}")
 def delete_item(id: str, time: datetime, response: Response):
-    time = time_to_str(time)
-    if time is None:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return Error(400, "Validation Failed")
     if not unitExist(id):
         response.status_code = status.HTTP_404_NOT_FOUND
         return Error(code=404, message="Item not found")
@@ -57,19 +68,12 @@ def get_info(id: str, response: Response):
 
 
 @app.get("/updates/")
-def get_updates(date: str, response: Response):
-    date = str_to_time(date)
-    if date is None:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return Error(code=400, message="Validation Failed")
+def get_updates(date: datetime, response: Response):
     return getUpdates(date)
 
 
 @app.get("/node/{id}/history")
-def get_node_history(id: str, dateStart: str, dateEnd: str, response: Response):
-    dateStart = str_to_time(dateStart)
-    dateEnd = str_to_time(dateEnd)
-    if dateStart is None or dateEnd is None:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return Error(code=400, message="Validation Failed")
+def get_node_history(
+    id: str, dateStart: datetime, dateEnd: datetime, response: Response
+):
     return getNodeHistory(id, dateStart, dateEnd)
