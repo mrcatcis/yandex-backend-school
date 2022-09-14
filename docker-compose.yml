@@ -6,7 +6,7 @@ services:
     image: yet-another-api-image
     container_name: yet-another-api
     ports:
-      - "8009:8009"
+      - $API_PORT:$API_PORT
     networks:
       database: null
     volumes:
