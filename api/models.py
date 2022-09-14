@@ -1,20 +1,21 @@
-from datetime import datetime, timezone
 import enum
+from datetime import datetime, timezone
 from typing import List
 
 from pydantic import BaseModel, Field, validator
-
 
 
 class SystemItemType(enum.Enum):
     FILE = "FILE"
     FOLDER = "FOLDER"
 
+
 def convert_datetime_to_iso_8601_with_z_suffix(dt: datetime) -> str:
-    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def transform_to_utc_datetime(dt: datetime) -> datetime:
     return dt.astimezone(tz=timezone.utc)
-
 
 
 class SystemItem(BaseModel):
@@ -47,6 +48,7 @@ class SystemItemHistoryUnit(BaseModel):
     type: SystemItemType
     size: int | None
     date: datetime
+
 
 class SystemItemHistoryResponse(BaseModel):
     items: List[SystemItemHistoryUnit]

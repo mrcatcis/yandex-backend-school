@@ -14,11 +14,12 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_HOST: ${DATABASE_HOST:-}
-      DATABASE_PORT: ${DATABASE_PORT:-}
-      POSTGRES_USER: ${POSTGRES_USER:-}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-      POSTGRES_DB: ${POSTGRES_DB:-}
+      DATABASE_HOST: $DATABASE_HOST
+      DATABASE_PORT: $DATABASE_PORT
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      MODE: $MODE
 
   postgres:
     image: postgres:alpine

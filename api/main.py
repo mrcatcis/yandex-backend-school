@@ -6,22 +6,19 @@ from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from config import MODE, Mode
 from db_requests import (
     deleteUnit,
-    getNodeHistory,
-    getUnits,
-    getUpdates,
-    unitExist,
     deleteUnits,
     getHistory,
-    importItems,
+    getNodeHistory,
     getUnitInfo,
+    getUnits,
+    getUpdates,
+    importItems,
+    unitExist,
 )
-from models import (
-    Error,
-    SystemItemImport,
-    SystemItemImportRequest,
-)
+from models import Error, SystemItemImport, SystemItemImportRequest
 from utils import str_to_time, time_to_str
 
 app = FastAPI()
@@ -38,19 +35,19 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
     )
 
 
-@app.get("/get_items/")
-def get_item() -> SystemItemImport:
-    return getUnits()
+if MODE == Mode.DEBUG:
 
+    @app.get("/get_items/")
+    def get_item() -> SystemItemImport:
+        return getUnits()
 
-@app.delete("/delete/")
-def delete_items():
-    return deleteUnits()
+    @app.delete("/delete/")
+    def delete_items():
+        return deleteUnits()
 
-
-@app.get("/get_history/")
-def get_history():
-    return getHistory()
+    @app.get("/get_history/")
+    def get_history():
+        return getHistory()
 
 
 @app.delete("/delete/{id}")
@@ -81,10 +78,15 @@ def get_updates(date: datetime, response: Response):
 
 @app.get("/node/{id}/history")
 def get_node_history(
-    id: str, dateStart: datetime | None, dateEnd: datetime | None, response: Response
+    id: str,
+    response: Response,
+    dateStart: datetime | None = None,
+    dateEnd: datetime | None = None,
 ):
     if not unitExist(id):
         response.status_code = status.HTTP_404_NOT_FOUND
         return Error(code=404, message="Item not found")
+    if (dateStart is None) != (dateEnd is None):
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return Error(code=400, message="Validation Failed")
     return getNodeHistory(id, dateStart, dateEnd)
-

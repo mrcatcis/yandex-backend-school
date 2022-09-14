@@ -1,51 +1,46 @@
 from datetime import datetime, timedelta
 from os import getenv
 from typing import List
-from loguru import logger
+
 from fastapi import HTTPException
+from loguru import logger
 from sqlalchemy import (
     BigInteger,
-    Boolean,
     Column,
     DateTime,
     Enum,
-    ForeignKey,
     Integer,
-    SmallInteger,
     String,
-    Table,
-    create_engine,
     and_,
+    create_engine,
 )
-
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship, sessionmaker
 from sqlalchemy.orm.session import Session
 
-
+from config import (
+    DATABASE_HOST,
+    DATABASE_PORT,
+    POSTGRES_DB,
+    POSTGRES_PASSWORD,
+    POSTGRES_USER,
+    STRING_SIZE,
+)
 from models import (
     SystemItem,
-    SystemItemImport,
-    SystemItemType,
-    SystemItemHistoryUnit,
     SystemItemHistoryResponse,
+    SystemItemHistoryUnit,
+    SystemItemImport,
     SystemItemImportRequest,
+    SystemItemType,
 )
-from utils import str_to_time, time_to_str
-
-POSTGRES_USER = getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = getenv("POSTGRES_PASSWORD")
-DATABASE_HOST = getenv("DATABASE_HOST")
-DATABASE_PORT = getenv("DATABASE_PORT")
-POSTGRES_DB = getenv("POSTGRES_DB")
+from utils import time_to_str
 
 engine = create_engine(
     f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{POSTGRES_DB}"
 )
 
 Base = declarative_base()
-
-STRING_SIZE = 256
 
 
 class Unit(Base):
@@ -135,9 +130,6 @@ def get_children(parent_id: str) -> List[Unit]:
     return session.query(Unit).filter(Unit.parentId == parent_id).all()
 
 
-
-
-
 def getUnitInfo(id: str) -> SystemItem:
     unit = getUnit(id)
     if unit.type == SystemItemType.FOLDER:
@@ -217,19 +209,31 @@ def getUpdates(date: datetime):
 
 
 def getNodeHistory(
-    id: str, date_start: datetime, date_end: datetime
+    id: str,
+    date_start: datetime | None,
+    date_end: datetime | None,
 ) -> SystemItemHistoryResponse:
-    nodeHistory = (
-        session.query(History)
-        .filter(
-            and_(
+    if date_start is None:
+        nodeHistory = (
+            session.query(History)
+            .filter(
                 History.unit_id == id,
-                date_start <= History.date,
-                History.date < date_end,
             )
+            .all()
         )
-        .all()
-    )
+
+    else:
+        nodeHistory = (
+            session.query(History)
+            .filter(
+                and_(
+                    History.unit_id == id,
+                    date_start <= History.date,
+                    History.date < date_end,
+                )
+            )
+            .all()
+        )
     return SystemItemHistoryResponse(
         items=[
             SystemItemHistoryUnit(
@@ -272,6 +276,7 @@ def dumpSystemItem(item: SystemItem) -> None:
         session.add(dump)
         session.commit()
 
+
 def dumpEndParent(end_parent_id):
     def recDumpChilds(unit: SystemItem):
         dumpSystemItem(unit)
@@ -281,10 +286,12 @@ def dumpEndParent(end_parent_id):
     node = getNode(end_parent_id)
     recDumpChilds(node)
 
+
 def dumpAll():
-     parents = session.query(Unit).filter(Unit.parentId == None).all()
-     for parent in parents:
+    parents = session.query(Unit).filter(Unit.parentId == None).all()
+    for parent in parents:
         dumpEndParent(parent.id)
+
 
 def deleteUnit(id: str, date: datetime):
     parentId = session.query(Unit).get(id).parentId
