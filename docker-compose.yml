@@ -37,7 +37,7 @@ services:
       DATABASE_PORT: $DATABASE_PORT
       
     volumes:
-      - ./data/db/:/var/lib/mysql
+      - ./data/db/:/var/lib/postgresql
 
 networks:
   database:
