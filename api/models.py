@@ -40,6 +40,18 @@ class SystemItemImportRequest(BaseModel):
     updateDate: datetime
 
 
+class SystemItemHistoryUnit(BaseModel):
+    id: str
+    url: str | None = None
+    parentId: str | None = None
+    type: SystemItemType
+    size: int | None
+    date: datetime
+
+class SystemItemHistoryResponse(BaseModel):
+    items: List[SystemItemHistoryUnit]
+
+
 class Error(BaseModel):
     code: int
     message: str

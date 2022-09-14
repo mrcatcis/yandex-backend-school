@@ -1,27 +1,30 @@
+from datetime import datetime
+
 from fastapi import FastAPI, Response, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+
 from db_requests import (
-    getUnits,
     addUnit,
-    unitExist,
-    updateUnit,
     deleteUnit,
     getNode,
-    getUpdates,
     getNodeHistory,
+    getUnits,
+    getUpdates,
+    unitExist,
+    updateUnit,
+    deleteUnits,
+    getHistory
 )
 from models import (
-    SystemItemType,
-    SystemItem,
+    Error,
+    SystemItemHistoryResponse,
     SystemItemImport,
     SystemItemImportRequest,
-    Error,
 )
-from utils import time_to_str, str_to_time
-from datetime import datetime
+from utils import str_to_time, time_to_str
 
 app = FastAPI()
 
@@ -41,6 +44,14 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
 def get_item() -> SystemItemImport:
     return getUnits()
 
+
+@app.delete("/delete/")
+def delete_items():
+    return deleteUnits()
+
+@app.get("/get_history/")
+def get_history():
+    return getHistory()
 
 @app.delete("/delete/{id}")
 def delete_item(id: str, date: datetime, response: Response):
@@ -76,4 +87,12 @@ def get_updates(date: datetime, response: Response):
 def get_node_history(
     id: str, dateStart: datetime, dateEnd: datetime, response: Response
 ):
+    if not unitExist(id):
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return Error(code=404, message="Item not found")
     return getNodeHistory(id, dateStart, dateEnd)
+
+# !TODO save history after full processing import task, 
+# !     save on operations with childs if it's not an empty folder(size changed)
+# !     probably do full backup where parentID == None and watch changed
+# !     deploy MVP to yandex server
