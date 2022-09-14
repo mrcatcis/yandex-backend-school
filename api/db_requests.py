@@ -26,7 +26,6 @@ from sqlalchemy.orm.session import Session
 from models import (
     SystemItem,
     SystemItemImport,
-    SystemItemImportRequest,
     SystemItemType,
     SystemItemHistoryUnit,
     SystemItemHistoryResponse,
@@ -80,22 +79,32 @@ class History(Base):
     size = Column(BigInteger, nullable=True)
 
 
-
 Base.metadata.create_all(engine)
 Session = sessionmaker()
 Session.configure(bind=engine)
 session = Session()
 
-# update date of all parents, return the main parent
+
 def updateParentDate(parentId: str, date: datetime):
+    if parentId is None:
+        return
     parent = session.query(Unit).get(parentId)
-    last_parent = parent
-    while parent is not None:
+    while parent is not None and parent.id is not None:
+        size = getNode(parent.id).size
+        old_unit = History(
+            unit_id=parent.id,
+            url=parent.url,
+            parentId=parent.parentId,
+            size=size,
+            type=parent.type,
+            date=parent.date,
+        )
+        session.add(old_unit)
+        session.commit()
+
         session.query(Unit).filter(Unit.id == parent.id).update({Unit.date: date})
         session.commit()
-        last_parent = parent
         parent = session.query(Unit).get(parent.parentId)
-    return last_parent
 
 
 def addUnit(unit: SystemItemImport, date: datetime):
@@ -107,8 +116,7 @@ def addUnit(unit: SystemItemImport, date: datetime):
         type=unit.type,
         size=unit.size,
     )
-    if unit.parentId is not None:
-        return updateParentDate(unit.parentId, date)
+    updateParentDate(unit.parentId, date)
     session.add(newUnit)
     session.commit()
 
@@ -123,7 +131,19 @@ def unitExist(id: str) -> bool:
 
 def updateUnit(unit: SystemItemImport, date: datetime):
 
+    size = getNode(unit.id).size
     unit = session.query(Unit).get(unit.id)
+    old_unit = History(
+        unit_id=unit.id,
+        url=unit.url,
+        date=unit.date,
+        parentId=unit.parentId,
+        type=unit.type,
+        size=size,
+    )
+    session.add(old_unit)
+    session.commit()
+
     session.query(Unit).filter(Unit.id == unit.id).update(
         {
             Unit.url: unit.url,
@@ -135,8 +155,8 @@ def updateUnit(unit: SystemItemImport, date: datetime):
     )
     session.commit()
 
-    if unit.parentId is not None:
-        return updateParentDate(unit.parentId, date)
+    updateParentDate(unit.parentId, date)
+    
 
 
 # get all units in folder with id=parent_id
@@ -161,8 +181,7 @@ def deleteUnit(id: str, date: datetime):
 
     onlyDelete(id)
 
-    if parentId is not None:
-        updateParentDate(parentId, date)
+    updateParentDate(parentId, date)
 
 
 def getUnitInfo(id: str) -> SystemItem:
@@ -201,101 +220,6 @@ def getNode(id: str) -> SystemItem:
     return getUnitInfoSized(getUnitInfo(id))
 
 
-def updateSizes(id: str):
-    unit = getNode(id)
-
-    def clearUpdateSizes(id: str):
-        for item in unit.children:
-            session.query(Unit).filter(Unit.id == item.id).update(
-                {Unit.size: item.size}
-            )
-            session.commit()
-            clearUpdateSizes(item)
-
-
-def dumpImportItem(item: SystemItemImport, date: datetime):
-    dump = History(
-        unit_id=item.id,
-        url=item.url,
-        size=item.size,
-        type=item.type,
-        date=date,
-        parentId=item.parentId,
-    )
-    session.add(dump)
-    session.commit()
-    """
-    if (
-        not session.query(History)
-        .filter(
-            and_(
-                History.unit_id == dump.id,
-                History.url == dump.url,
-                History.date == dump.date,
-                History.parentId == dump.parentId,
-                History.size == dump.size,
-            )
-        )
-        .all()
-    ):
-        session.add(dump)
-        session.commit()
-    """
-
-
-def dumpSystemItem(item: SystemItem):
-    dump = History(
-        unit_id=item.id,
-        url=item.url,
-        size=item.size,
-        type=item.type,
-        parentId=item.parentId,
-        date=item.date,
-    )
-    session.add(dump)
-    session.commit()
-    """if (
-        not session.query(History)
-        .filter(
-            and_(
-                History.unit_id == dump.id,
-                History.url == dump.url,
-                History.date == dump.date,
-                History.parentId == dump.parentId,
-                History.size == dump.size,
-            )
-        )
-        .all()
-    ):
-        session.add(dump)
-        session.commit()
-    """
-
-
-def dumpUnit(id: str):
-    node = getNode(id)
-
-    def clearDumpUnit(id: str):
-        for item in node.children:
-            dumpSystemItem(item)
-            clearDumpUnit(item)
-
-
-def importItems(imported: SystemItemImportRequest) -> None:
-    update_date = imported.updateDate
-    parents = set()
-    for item in imported.items:
-        dumpImportItem(item, datetime)
-        if unitExist(item.id):
-            parents.add(updateUnit(item, update_date))
-        else:
-            parents.add(addUnit(item, update_date))
-    for parent in parents:
-        if parent is not None:
-            updateSizes(parent.id)
-            dumpUnit(parent.id)
-
-
 def getUnits():
     return session.query(Unit).all()
 
@@ -305,10 +229,8 @@ def deleteUnits():
     session.query(History).delete()
     session.commit()
 
-
 def getHistory():
     return session.query(History).all()
-
 
 def getUpdates(date: datetime):
     day_ago = date - timedelta(days=1)
