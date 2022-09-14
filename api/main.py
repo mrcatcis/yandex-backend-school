@@ -7,16 +7,15 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from db_requests import (
-    addUnit,
     deleteUnit,
+    importItems,
     getNode,
     getNodeHistory,
     getUnits,
     getUpdates,
     unitExist,
-    updateUnit,
     deleteUnits,
-    getHistory
+    getHistory,
 )
 from models import (
     Error,
@@ -49,9 +48,11 @@ def get_item() -> SystemItemImport:
 def delete_items():
     return deleteUnits()
 
+
 @app.get("/get_history/")
 def get_history():
     return getHistory()
+
 
 @app.delete("/delete/{id}")
 def delete_item(id: str, date: datetime, response: Response):
@@ -62,12 +63,8 @@ def delete_item(id: str, date: datetime, response: Response):
 
 
 @app.post("/imports/")
-def import_items(request: SystemItemImportRequest, response: Response):
-    for item in request.items:
-        if unitExist(item.id):
-            updateUnit(item, request.updateDate)
-        else:
-            addUnit(item, request.updateDate)
+def import_items(imported: SystemItemImportRequest, response: Response):
+    importItems(imported)
 
 
 @app.get("/nodes/{id}")
@@ -92,7 +89,8 @@ def get_node_history(
         return Error(code=404, message="Item not found")
     return getNodeHistory(id, dateStart, dateEnd)
 
-# !TODO save history after full processing import task, 
+
+# !TODO save history after full processing import task,
 # !     save on operations with childs if it's not an empty folder(size changed)
 # !     probably do full backup where parentID == None and watch changed
 # !     deploy MVP to yandex server

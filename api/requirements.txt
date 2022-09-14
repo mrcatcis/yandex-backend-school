@@ -1,8 +1,8 @@
-fastapi==0.68.1
-uvicorn==0.18.3
-gunicorn==20.1.0
-setuptools==59.2.0
-greenlet==1.1.2
-sqlalchemy==1.4.26
-psycopg2==2.9.3
-python-dateutil==2.8.2
+fastapi
+uvicorn
+gunicorn
+setuptools
+greenlet
+sqlalchemy
+psycopg2
+python-dateutil
