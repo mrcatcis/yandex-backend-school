@@ -155,6 +155,8 @@ def getUnitInfo(id: str) -> SystemItem:
 
 
 def getUnitInfoSized(unit_info: SystemItem) -> SystemItem:
+    if not unit_info.children:
+        return unit_info
     unit_info.size = sum(
         item.size if item.type == SystemItemType.FILE else getUnitInfoSized(item).size
         for item in unit_info.children

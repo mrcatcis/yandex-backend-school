@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 import requests
 
-API_BASEURL = "http://127.0.0.1:8009"
+API_BASEURL = "https://army-2080.usr.yandex-academy.ru/"
 
 ROOT_ID = "069cb8d7-bbdd-47d3-ad8f-82ef4c269df1"
 
@@ -168,9 +168,9 @@ def request(path, method="GET", data=None, json_response=False):
     if method == "GET":
         res = requests.get(f"{API_BASEURL}{path}")
     elif method == "POST":
-        res = requests.post(f"{API_BASEURL}{path}", data=json.dumps(data))
+        res = requests.post(f"{API_BASEURL}{path}", json=data)
     elif method == "DELETE":
-        res = requests.delete(f"{API_BASEURL}{path}", data=json.dumps(data))
+        res = requests.delete(f"{API_BASEURL}{path}", json=data)
     #print(data, res.content, sep='\n')
     if json_response:
         return res.status_code, res.json()
